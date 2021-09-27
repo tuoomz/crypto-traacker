@@ -14,7 +14,7 @@ export interface Token {
 }
 export interface Platform {
   name?: string;
-  tokenAddress?: string;
+  token_address?: string;
 }
 
 export interface Erc20Properties {
@@ -53,18 +53,17 @@ function App() {
         setIsLoaded(true);
       })
       .catch(function (error) {
-        setError(error.response.data);
+        setError("Error getting quotes for this ticker");
       })
   }
 
   async function get_data_from_blockchain(_token: Token, abi: any, ) {
     let infuraProvider = new ethers.providers.InfuraProvider('mainnet');
-    const tokenContract = new ethers.Contract(_token?.platform?.tokenAddress as string, abi, infuraProvider);
+    const tokenContract = new ethers.Contract(_token?.platform?.token_address as string, abi, infuraProvider);
   
-    const value = await tokenContract.totalSupply();
-    const decimals = await tokenContract.decimals();
+    const value = await tokenContract.totalSupply().toString();
+    const decimals = await tokenContract.decimals().toString();
     const name = await tokenContract.name();
-  
     const totalSupply = BigInt(parseInt(value)).toString();
     setErc20Properties({ total_supply: totalSupply, decimals: decimals, name: name });
   
@@ -75,19 +74,19 @@ function App() {
     e.preventDefault();
     const { symbol } = e.target.elements
     setToken({ symbol: symbol.value });
-    const _token = data.find((x: any) => x.symbol === symbol.value) || {} as Token
+    const _token = data.find((x: any) => x.symbol === symbol.value.toUpperCase()) || {} as Token
     setToken(_token)
 
     getPrice(_token.id as number);
 
-    console.log("getting abi")
-    if (_token?.platform?.tokenAddress) {
+    if (_token?.platform?.token_address) {
+      console.log("getting abi")
       axios.get('https://api.etherscan.io/api',
         {
           params: {
             module: 'contract',
             action: 'getabi',
-            address: _token.platform.tokenAddress,
+            address: _token.platform.token_address,
             apikey: 'KV8J6J9BJDC462NEVH4VY3RSQX8B5CZ5FY'
           }
         })
@@ -151,7 +150,7 @@ function App() {
             token?.platform &&
             <div>
               <div>Blockchain: {token.platform.name}</div>
-              <div>Token Address: {token.platform.tokenAddress}</div>
+              <div>Token Address: {token.platform.token_address}</div>
               <br />
               <div style={{ fontWeight: `bold` }}>Data from blockchain</div>
               <div>Name: {erc20Properties?.name}</div>
