@@ -20,7 +20,7 @@ export interface Platform {
 export interface Erc20Properties {
   total_supply?: string;
   name?: string;
-  decimals?: number;
+  decimals?: string;
 }
 
 const coinmarketcap = axios.create({
@@ -58,14 +58,16 @@ function App() {
   }
 
   async function get_data_from_blockchain(_token: Token, abi: any, ) {
+    setErc20Properties({ total_supply: '', decimals: '', name: '' });
     let infuraProvider = new ethers.providers.InfuraProvider('mainnet');
     const tokenContract = new ethers.Contract(_token?.platform?.token_address as string, abi, infuraProvider);
   
-    const value = await tokenContract.totalSupply().toString();
-    const decimals = await tokenContract.decimals().toString();
+    const value = await tokenContract.totalSupply();
+
+    const decimals = await tokenContract.decimals();
     const name = await tokenContract.name();
     const totalSupply = BigInt(parseInt(value)).toString();
-    setErc20Properties({ total_supply: totalSupply, decimals: decimals, name: name });
+    setErc20Properties({ total_supply: totalSupply, decimals: decimals.toString(), name: name });
   
     setIsLoaded(true);
   }
@@ -93,7 +95,7 @@ function App() {
         .then(async function (response) {
           const abi = response.data.result
           setAbi(abi);
-
+        
           await get_data_from_blockchain(_token, abi);
 
         })
